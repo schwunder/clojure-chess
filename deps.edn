@@ -1,0 +1,1 @@
+{:deps {org.clojure/clojurescript {:mvn/version S"1.12.42"}}}
