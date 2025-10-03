@@ -1,134 +1,60 @@
 (ns core)
-
-
-;      (let [piece-positions (let first-two-ranks (fn [positions] (subvec postions 0 16)))
-;; -------------------------------------------------------------------
-;; HELPER FUNCTION
-;; -------------------------------------------------------------------
-
 (defn black-square?
-  "Checks if a square at [ranks col] should be black."
-  [ranks
-   col]
+  [rank
+   file]
   (even?
     (+
-      ranks
-      col)))
-
-
-(def pieces
-  (let [
-        black-piece
-        {:color :black}
-
-        white-piece
-        {:color :white}
-
-        back-rank-types
-        [:rook
-         :knight
-         :bishop
-         :queen
-         :king
-         :bishop
-         :knight
-         :rook]
-
-        make-piece (fn [color-template piece-type]
-                     (assoc
-                       color-template
-                       :piece-type piece-type)
-                     )
-
-        piece-maker (fn [color-template]
-                      ;order important signature: (partial f arg1 arg2 ...)
-                      (partial
-                        make-piece
-                        color-template)
-                      )
-
-        create-pawn-rank (fn [color-template]
-                           (repeat 8
-                                   (make-piece
-                                     color-template
-                                     :pawn)
-                                   )
-                           )
-
-        create-back-rank (fn [color-template]
-                           (map
-                             (piece-maker color-template)
-                             back-rank-types)
-                           )
-        ]
-
-    (vec
-      (concat
-        (create-back-rank black-piece)
-        (create-pawn-rank black-piece)
-        (create-pawn-rank white-piece)
-        (create-back-rank white-piece)
-        )
-      )
-    ))
-(print pieces)
-(def uncolored-squares (let [ranks (range 8 0 -1)
-                   files (range 1 9)]
-               (vec
-                 (for [rank ranks
-                       file files]
-                   [rank file]))))
-(print uncolored-squares)
-(defn initial-piece-squares [squares]
-  (let [first-two-ranks
-        (subvec
-          squares
-          0
-          16)
-        last-two-ranks
-        (subvec
-          squares
-          48
-          64)]
-    (concat
-      first-two-ranks
-      last-two-ranks)))
-(print initial-piece-squares uncolored-squares)
-(defn pieces-on-squares [piece-squares, pieces]
-  (zipmap
-    piece-squares
-    pieces))
-(print pieces-on-squares)
+      rank
+      file)))
+(def ranks (range 8 0 -1))
+(def files (range 1 9))
+(def squares (vec
+                         (for [rank ranks
+                               file files]
+                           [rank file])))
+(def initial-board
+  {[1 1] {:color :white, :type :rook}
+   [1 2] {:color :white, :type :knight}
+   [1 3] {:color :white, :type :bishop}
+   [1 4] {:color :white, :type :queen}
+   [1 5] {:color :white, :type :king}
+   [1 6] {:color :white, :type :bishop}
+   [1 7] {:color :white, :type :knight}
+   [1 8] {:color :white, :type :rook}
+   [2 1] {:color :white, :type :pawn}
+   [2 2] {:color :white, :type :pawn}
+   [2 3] {:color :white, :type :pawn}
+   [2 4] {:color :white, :type :pawn}
+   [2 5] {:color :white, :type :pawn}
+   [2 6] {:color :white, :type :pawn}
+   [2 7] {:color :white, :type :pawn}
+   [2 8] {:color :white, :type :pawn}
+   [7 1] {:color :black, :type :pawn}
+   [7 2] {:color :black, :type :pawn}
+   [7 3] {:color :black, :type :pawn}
+   [7 4] {:color :black, :type :pawn}
+   [7 5] {:color :black, :type :pawn}
+   [7 6] {:color :black, :type :pawn}
+   [7 7] {:color :black, :type :pawn}
+   [7 8] {:color :black, :type :pawn}
+   [8 1] {:color :black, :type :rook}
+   [8 2] {:color :black, :type :knight}
+   [8 3] {:color :black, :type :bishop}
+   [8 4] {:color :black, :type :queen}
+   [8 5] {:color :black, :type :king}
+   [8 6] {:color :black, :type :bishop}
+   [8 7] {:color :black, :type :knight}
+   [8 8] {:color :black, :type :rook}})
+(print initial-board)
 ;; -------------------------------------------------------------------
 ;; MAIN FUNCTION
 ;; -------------------------------------------------------------------
 
-(defn print-board [pieces]
-  (let [squares
-        (let [ranks (range 8 0 -1)
-              files (range 1 9)]
-          (vec
-            (for [rank ranks
-                  file files]
-              [rank file])))
-
-        board
-        (let [piece-positions
-              (concat
-                (subvec
-                  squares
-                  0
-                  16)
-                (subvec
-                  squares
-                  48
-                  64))]
-          (zipmap
-            piece-positions
-            pieces))
+(defn print-board [pieces-with-squares]
+  (let [
 
         ;; --- Display Logic ---
-        piece-type->unicode
+        type->unicode
         {:rook "♜"
          :knight "♞"
          :bishop "♝"
@@ -157,14 +83,14 @@
              files]
           (let [piece
                 (get
-                  board
+                  pieces-with-squares
                   [ranks files]
-                  {:piece-type :empty, :color nil})
+                  {:type :empty, :color nil})
 
                 piece-char
                 (get
-                  piece-type->unicode
-                  (:piece-type piece))
+                  type->unicode
+                  (:type piece))
 
                 bg-color
                 (if (black-square? ranks files)
@@ -204,4 +130,10 @@
     (println)))
 
 ;; Run it!
-(print-board pieces)
+(print-board initial-pieces-on-squares)
+
+(let [new-board {[0 0] "kw" [0 1] "kb"}]
+  (-> new-board
+      (assoc [0 0] "__")
+      (assoc [0 1] "kw")))
+
