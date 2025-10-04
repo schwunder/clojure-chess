@@ -38,8 +38,6 @@
       (println))
     (println "    a  b  c  d  e  f  g  h ")))
 
-; translation between user input and move piece
-
 (defn move-piece [pieces from to]
   (if-let [piece (get pieces from)]
     (-> pieces
@@ -48,7 +46,58 @@
     pieces))
 
 (def legal? true)
-(def one-rook  {[1 1] {:color :white, :type :rook} })
+(def test-piece  {[1 1] {:color :white, :type :rook} })
+
+(defn on-board? [from to]
+  (let [valid-numbers #{1 2 3 4 5 6 7 8}]
+    (every? valid-numbers (concat from to))))
+
+(defn vector-difference [from to]
+  (let [[from-x from-y] from
+        [to-x to-y] to]
+    [(- to-x from-x) (- to-y from-y)]))
+
+(defn normalize-vector [[x y]]
+  (letfn [(to-unit [n]
+            (cond
+              (> n 0) 1
+              (< n 0) -1
+              :else   0))]
+    [(to-unit x) (to-unit y)]))
+
+(defn legal-rook-move? [normalized-vector]
+  (let [rook-moves #{[1 0] [-1 0] [0 1] [0 -1]}]
+    (contains? rook-moves normalized-vector)))
+
+(defn legal-bishop-move? [normalized-vector]
+  (let [bishop-moves #{[1 1] [1 -1] [-1 1] [-1 -1]}]
+    (contains? bishop-moves normalized-vector)))
+
+(defn legal-queen-move? [normalized-vector]
+  (let [queen-moves #{[1 0] [-1 0] [0 1] [0 -1]
+                      [1 1] [1 -1] [-1 1] [-1 -1]}]
+    (contains? queen-moves normalized-vector)))
+
+(defn legal-king-move? [difference-vector]
+  (let [king-moves #{[1 0] [-1 0] [0 1] [0 -1]
+                     [1 1] [1 -1] [-1 1] [-1 -1]}]
+    (contains? king-moves difference-vector)))
+
+(defn legal-knight-move? [difference-vector]
+  (let [knight-moves #{[2 1] [2 -1] [-2 1] [-2 -1]
+                       [1 2] [1 -2] [-1 2] [-1 -2]}]
+    (contains? knight-moves difference-vector)))
+
+(defn legal-pawn-move? [difference-vector]
+  (let [pawn-moves #{[0 1]}]
+    (contains? pawn-moves difference-vector)))
+
+(defn piece-vector [piece from to]
+  (let [norm-need #{:rook :bishop :queen}
+        dif-vec (vector-difference from to)]
+    (if (contains? norm-need (:type piece)) (normalize-vector dif-vec) dif-vec)
+    )
+  )
 
 (defn chess-game [pieces unchecked-move piece-rules-legal?]
   (let [next-pieces-state (if piece-rules-legal?
@@ -58,70 +107,16 @@
   )
 
 (println "Move Tests:")
-(chess-game one-rook move-piece legal?)
-
-
-; game mechanics rule: all pieces: rule two: both of these do not crash the game and leave the same as before. this is more a player issue.
-; so check if a move happened this is a more meta rule than a move rule. so moving to the same square does not change the state therefore you did not move. this is illegal.
-; same with taking an empty piece or the air nothing happens empty move no state change illegal
-; other game mechanics rules are general wrong inputs etc. throwing the computer out the window. no playing i.e. maybe time chess clock
-
-;move rules: all pieces: rule one: take from the board and stay on the board
-(defn in-bounds? [square]
-  (let [[file rank] square]
-    (and
-      (and (< 0 file) (> 9 file))
-      (and (< 0 rank) (> 9 rank)))
-    )
-  )
-
-(defn on-board? [from to]
-  (and
-    (in-bounds? from)
-    (in-bounds? to))
-  )
-
-;sidenote castling will be done later
-
-(def legal-rook-moves #{[1 0] [-1 0] [0 1] [0 -1]})
-(def legal-bishop-moves #{[1 1] [1 -1] [-1 1] [-1 -1]})
-(def legal-queen-moves (into legal-rook-moves legal-bishop-moves))
-;legal king moves non normalized
-(def legal-king-moves legal-queen-moves)
-
-;legal pawn moves non normalized.
-;extra map with two sets takes moves and normal moves. on passant and moving two in the beginning come later
-
-
-
-(defn legal-rook-move? [normalized-vector]
-  (contains? legal-rook-moves normalized-vector))
-
-(defn legal-bishop-move? [normalized-vector]
-  (contains? legal-bishop-moves normalized-vector))
-
-(defn legal-queen-move? [normalized-vector]
-  (contains? legal-queen-moves normalized-vector))
+(chess-game test-piece move-piece legal?)
 
 (def from [1 1])
 (def to [1 8])
 
-(defn vector-dif [from to]
-  (let [[from-x from-y] from
-        [to-x to-y] to]
-    [(- from-x to-x) (- from-y to-y)]))
-
-(defn normalize-vector [v]
-  (letfn [(to-unit [n]
-            (cond
-              (> n 0) 1
-              (< n 0) -1
-              :else   0))]
-    (vec (map to-unit v))))
-
-(def dif (vector-dif from to))         ; -> [0 -7]
+(def dif (vector-difference from to))         ; -> [0 -7]
 (def norm-dif (normalize-vector dif)) ; -> [0 -1]
 
+(vector-difference from to)
+(normalize-vector dif)
 (legal-rook-move? norm-dif)
 
 (legal-rook-move? [1 1])
@@ -134,8 +129,10 @@
 
 (legal-queen-move? [1 1])
 
+(piece-vector (get test-piece [1 1]) [1 1] [1 8])
 
 
 
-
-
+;blocking rules. same piece blocks path. opponent piece blocks path only for rook bishop queen. pinned piece rules. time rule input expected. no change rule
+;pawn rules should be map of two sets take rule set and move rule set and first move rule set later can move [0 2]
+;translation of input to coords
